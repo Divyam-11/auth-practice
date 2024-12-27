@@ -10,7 +10,7 @@ const userSchema = mongoose.Schema({
         lowercase:true,
         index:true,
         trim:true,
-
+// username , email , password
     },
     email:{
         type: String,
@@ -28,8 +28,10 @@ const userSchema = mongoose.Schema({
     }
 
 },{timestamps:true});
-userSchema.pre("Save",async function (next){
+userSchema.pre("save",async function (next){
+    console.log("i am in hook");
 if(!this.isModified("password")) return next();
+
     this.password = await bcrypt.hash(this.password, 10);
     next();
 })
