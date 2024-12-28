@@ -3,6 +3,7 @@ import {ApiError} from "../utils/ApiError.js";
 import {User} from "../models/user.model.js";
 import {ApiResponse} from "../utils/ApiResponse.js";
 import {options} from "../src/constants.js";
+
 const generateAccessAndRefreshTokens = async (userId)=>{
 
 try{
@@ -55,10 +56,23 @@ const loginUser = asyncHandler(async(req,res)=>{
         throw new ApiError(401,"Invalid Credentials");
     }
     const {accessToken,refreshToken} = await generateAccessAndRefreshTokens(user._id);
-    const loggedinUser = await User.findById(user._id).select("-password -refreshToken");
-    return res.status(200).cookie("accessToken",options).cookie("refreshToken",options).json(new ApiResponse(200,{
-        user:loggedinUser,accessToken,refreshToken
+    const loggedUser = await User.findById(user._id).select("-password -refreshToken");
+    return res.status(200).cookie("accessToken",accessToken,options).cookie("refreshToken",refreshToken,options).json(new ApiResponse(200,{
+        user:loggedUser,accessToken,refreshToken
     },"User Logged In Successfully"))
 
 })
-export {registerUser,loginUser};
+const logoutUser = asyncHandler(async(req,res)=>{
+    await User.findByIdAndUpdate(req.user._id,{
+        $unset:{
+            refreshToken : 1
+        }
+
+    },    {
+        new: true
+    })
+    return res.status(200).clearCookie("accessToken",options).clearCookie("refreshToken",options).json(
+        new ApiResponse(200,{},"User logged out")
+    )
+})
+export {registerUser,loginUser,logoutUser};
